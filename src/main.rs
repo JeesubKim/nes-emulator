@@ -31,7 +31,7 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_x);
     }
 
-    fn update_zero_and_negative_flags(&mut self, result: u8){
+    fn update_zero_and_negative_flags(&mut self, _result: u8){
 
         if self.register_a == 0 {
             // it's essential to set or unset CPU flag status depending on the results
@@ -72,7 +72,6 @@ impl CPU {
 
                 _ => todo!()
             }
-            todo!("")
         }
     }
 
