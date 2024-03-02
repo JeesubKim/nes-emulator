@@ -30,10 +30,17 @@ impl CPU {
         self.register_x = self.register_a;
         self.update_zero_and_negative_flags(self.register_x);
     }
-
+    fn inx(&mut self){
+        if self.register_x == 0xff {
+            self.register_x = 0;
+        } else {
+            self.register_x += 1;
+        }
+        self.update_zero_and_negative_flags(self.register_x);
+    }
     fn update_zero_and_negative_flags(&mut self, _result: u8){
 
-        if self.register_a == 0 {
+        if _result == 0 {
             // it's essential to set or unset CPU flag status depending on the results
             self.status = self.status | 0b0000_0010;
 
@@ -41,7 +48,7 @@ impl CPU {
             self.status = self.status & 0b1111_1101;
         }
 
-        if self.register_a & 0b1000_0000 != 0 {
+        if _result & 0b1000_0000 != 0 {
             self.status = self.status | 0b1000_0000;
 
         } else {
@@ -69,7 +76,7 @@ impl CPU {
                 0x00 => return, // BRK(0x00)
 
                 0xAA => self.tax(), //TAX (0xAA)
-
+                0xE8 => self.inx(), //INX
                 _ => todo!()
             }
         }
