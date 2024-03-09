@@ -8,6 +8,16 @@ pub struct CPU {
 
     //load program code into memory, starting at 0x8000 address. [0x8000.. 0xFFFF] is reserved for program ROM
 }
+
+pub struct OpCode { 
+    pub opcode:u8,
+    pub name:String,
+    pub bytes:u8,
+    pub cycles:u8,
+    pub addr_mode:AddressingMode,
+}
+
+
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
 pub enum AddressingMode { 
@@ -23,6 +33,18 @@ pub enum AddressingMode {
     Indirect_Y,
     NoneAddressing
 }
+impl OpCode {
+    pub fn new(&mut self, opcode:u8, name:String, bytes:u8, cycles:u8, addr_mode:AddressingMode) -> self {
+        OpCode {
+            self.opcode = opcode;
+            self.name = name;
+            self.bytes = bytes;
+            self.cycles = cycles;
+            self.addr_mode = addr_mode;
+        }
+    }
+}
+
 impl CPU {
 
     pub fn new() -> Self {
@@ -170,10 +192,20 @@ impl CPU {
                     self.lda(&AddressingMode::Absolute);
                     self.program_counter += 1;
                 }
-                0x00 => return, // BRK(0x00)
+                
+                0x85 => {// STA
+                    self.sta(AddressingMode::ZeroPage);
+                    self.program_counter += 1;
 
+                }
+                0x95 => {
+                    self.sta(AddressingMode::ZeroPage_X);
+                    self.program_counter += 1;
+                }
                 0xAA => self.tax(), //TAX (0xAA)
                 0xE8 => self.inx(), //INX
+
+                0x00 => return, // BRK(0x00)
                 _ => todo!()
             }
         }
@@ -197,6 +229,11 @@ impl CPU {
             self.register_x += 1;
         }
         self.update_zero_and_negative_flags(self.register_x);
+    }
+
+    fn sta(&mut self, mode: AddressingMode){
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.register_a);
     }
     fn update_zero_and_negative_flags(&mut self, _result: u8){
 
@@ -223,6 +260,22 @@ impl CPU {
     }
 
 }
+
+pub static ref CPU_OPS_CODES: Vec<OpCode> = vec! [
+    OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
+    OpCode::new(0xaa, "TAX", 1, 2, AddressingMode::NoneAddressing),
+
+
+    OpCode::new(0xa9, "LDA", 2, 2, AddressingMode::Immediate),
+    OpCode::new(0xa5, "LDA", 2, 3, AddressingMode::ZeroPage),
+    OpCode::new(0xb5, "LDA", 2, 4, AddressingMode::ZeroPage_X),
+    OpCode::new(0xad, "LDA", 3, 4, AddressingMode::Absolute),
+    OpCode::new(0xbd, "LDA", 3, 4, AddressingMode::Absolute_X),
+    OpCode::new(0xb9, "LDA", 3, 4, AddressingMode::Absolute_Y),
+    OpCode::new(0xa1, "LDA", 2, 6, AddressingMode::Indirect_X),
+    OpCode::new(0xb1, "LDA", 2, 5, AddressingMode::Indirect_Y),
+];
+
 
 #[cfg(test)]
 mod test {
